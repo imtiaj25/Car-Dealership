@@ -7,7 +7,8 @@ A beginner-friendly car stock website where you can add a car photo, price, and 
 - Shows a simple customer-facing list of cars in stock
 - Lets you add a car ad with photo, brand, model, price, year, mileage, fuel type, condition, category, phone number, and notes
 - Supports uploading a photo or using a photo URL
-- Saves to MongoDB when the backend is running
+- Saves to MongoDB when available
+- Saves to local JSON files when MongoDB is not installed
 - Falls back to browser storage when opened directly as `frontend/index.html`
 - Includes search by brand, model, category, or condition
 
@@ -53,7 +54,11 @@ Then open:
 http://localhost:5000
 ```
 
-Use a local MongoDB server or put a MongoDB Atlas connection string in `backend/.env`.
+MongoDB is optional. If MongoDB is not installed, the backend saves cars to:
+
+```text
+backend/data/cars.json
+```
 
 ## Run Without Database
 

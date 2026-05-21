@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs/promises");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -23,6 +24,8 @@ app.locals.memoryCars = sampleCars.map((car, index) => ({
   createdAt: new Date().toISOString()
 }));
 app.locals.memoryBookings = [];
+app.locals.carsFile = path.join(__dirname, "data", "cars.json");
+app.locals.bookingsFile = path.join(__dirname, "data", "bookings.json");
 
 app.use(cors());
 app.use(express.json());
@@ -51,6 +54,20 @@ async function seedCars() {
   }
 }
 
+async function ensureLocalDataFiles() {
+  try {
+    await fs.access(app.locals.carsFile);
+  } catch (error) {
+    await fs.writeFile(app.locals.carsFile, JSON.stringify(app.locals.memoryCars, null, 2));
+  }
+
+  try {
+    await fs.access(app.locals.bookingsFile);
+  } catch (error) {
+    await fs.writeFile(app.locals.bookingsFile, JSON.stringify([], null, 2));
+  }
+}
+
 async function startServer() {
   try {
     await mongoose.connect(MONGODB_URI, {
@@ -61,6 +78,7 @@ async function startServer() {
 
     await seedCars();
   } catch (error) {
+    await ensureLocalDataFiles();
     console.warn("MongoDB not connected. Using temporary in-memory car data.");
     console.warn(`Reason: ${error.message}`);
   }

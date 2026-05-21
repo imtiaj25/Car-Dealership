@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs/promises");
 const express = require("express");
 const multer = require("multer");
 const Car = require("../models/Car");
@@ -7,6 +8,18 @@ const router = express.Router();
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function readJson(filePath, fallback) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  } catch (error) {
+    return fallback;
+  }
+}
+
+async function writeJson(filePath, data) {
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
 const storage = multer.diskStorage({
@@ -85,7 +98,9 @@ router.get("/", async (req, res) => {
     } = req.query;
 
     if (!req.app.locals.useDatabase) {
-      return res.json(filterMemoryCars(req.app.locals.memoryCars, req.query));
+      const cars = await readJson(req.app.locals.carsFile, req.app.locals.memoryCars);
+      req.app.locals.memoryCars = cars;
+      return res.json(filterMemoryCars(cars, req.query));
     }
 
     const query = {};
@@ -156,12 +171,15 @@ router.post("/", upload.single("image"), async (req, res) => {
     };
 
     if (!req.app.locals.useDatabase) {
+      const cars = await readJson(req.app.locals.carsFile, req.app.locals.memoryCars);
       const car = {
         ...carData,
         _id: `local-${Date.now()}`,
         createdAt: new Date().toISOString()
       };
-      req.app.locals.memoryCars.unshift(car);
+      cars.unshift(car);
+      req.app.locals.memoryCars = cars;
+      await writeJson(req.app.locals.carsFile, cars);
       return res.status(201).json(car);
     }
 
@@ -176,13 +194,16 @@ router.post("/", upload.single("image"), async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     if (!req.app.locals.useDatabase) {
-      const beforeCount = req.app.locals.memoryCars.length;
-      req.app.locals.memoryCars = req.app.locals.memoryCars.filter((car) => car._id !== req.params.id);
+      const cars = await readJson(req.app.locals.carsFile, req.app.locals.memoryCars);
+      const beforeCount = cars.length;
+      const remainingCars = cars.filter((car) => car._id !== req.params.id);
 
-      if (beforeCount === req.app.locals.memoryCars.length) {
+      if (beforeCount === remainingCars.length) {
         return res.status(404).json({ message: "Car not found." });
       }
 
+      req.app.locals.memoryCars = remainingCars;
+      await writeJson(req.app.locals.carsFile, remainingCars);
       return res.json({ message: "Car deleted successfully." });
     }
 

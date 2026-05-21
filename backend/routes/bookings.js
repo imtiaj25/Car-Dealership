@@ -1,13 +1,28 @@
 const express = require("express");
+const fs = require("fs/promises");
 const Booking = require("../models/Booking");
 const Car = require("../models/Car");
 
 const router = express.Router();
 
+async function readJson(filePath, fallback) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  } catch (error) {
+    return fallback;
+  }
+}
+
+async function writeJson(filePath, data) {
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
 router.get("/", async (req, res) => {
   try {
     if (!req.app.locals.useDatabase) {
-      return res.json(req.app.locals.memoryBookings);
+      const bookings = await readJson(req.app.locals.bookingsFile, req.app.locals.memoryBookings);
+      req.app.locals.memoryBookings = bookings;
+      return res.json(bookings);
     }
 
     const bookings = await Booking.find()
@@ -23,7 +38,9 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     if (!req.app.locals.useDatabase) {
-      const selectedCar = req.app.locals.memoryCars.find((car) => car._id === req.body.car);
+      const cars = await readJson(req.app.locals.carsFile, req.app.locals.memoryCars);
+      const bookings = await readJson(req.app.locals.bookingsFile, req.app.locals.memoryBookings);
+      const selectedCar = cars.find((car) => car._id === req.body.car);
 
       if (!selectedCar) {
         return res.status(404).json({ message: "Selected car was not found." });
@@ -40,7 +57,9 @@ router.post("/", async (req, res) => {
         createdAt: new Date().toISOString()
       };
 
-      req.app.locals.memoryBookings.unshift(booking);
+      bookings.unshift(booking);
+      req.app.locals.memoryBookings = bookings;
+      await writeJson(req.app.locals.bookingsFile, bookings);
       return res.status(201).json(booking);
     }
 
