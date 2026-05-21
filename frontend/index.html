@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pierre Collet Motors</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Pierre Collet Motors</p>
+        <h1>Cars Available Now</h1>
+      </div>
+      <a href="#add-car" class="button">Add Car</a>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div>
+          <h2>Pierre Collet Motors</h2>
+          <p>
+            Add a photo, price, and car details. Customers can quickly see what cars you have in
+            stock and contact you about the one they like.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel" id="add-car">
+        <div class="section-title">
+          <p class="eyebrow">Add inventory</p>
+          <h2>Add a car ad</h2>
+        </div>
+
+        <form id="carForm" class="car-form">
+          <div class="form-grid two">
+            <label>
+              Car photo
+              <input type="file" name="image" accept="image/*" />
+            </label>
+            <label>
+              Or photo URL
+              <input type="url" name="imageUrl" placeholder="https://example.com/car.jpg" />
+            </label>
+          </div>
+
+          <div class="form-grid three">
+            <label>
+              Brand
+              <input type="text" name="brand" required placeholder="Toyota" />
+            </label>
+            <label>
+              Model
+              <input type="text" name="model" required placeholder="Camry" />
+            </label>
+            <label>
+              Price
+              <input type="number" name="price" required min="0" placeholder="25000" />
+            </label>
+          </div>
+
+          <div class="form-grid three">
+            <label>
+              Year
+              <input type="number" name="year" required min="1980" placeholder="2021" />
+            </label>
+            <label>
+              Mileage
+              <input type="number" name="mileage" required min="0" placeholder="45000" />
+            </label>
+            <label>
+              Fuel type
+              <input type="text" name="fuelType" required placeholder="Petrol" />
+            </label>
+          </div>
+
+          <div class="form-grid three">
+            <label>
+              Condition
+              <select name="condition" required>
+                <option value="Used">Used</option>
+                <option value="New">New</option>
+              </select>
+            </label>
+            <label>
+              Category
+              <select name="category" required>
+                <option value="Family">Family</option>
+                <option value="SUV">SUV</option>
+                <option value="Sports">Sports</option>
+                <option value="Electric">Electric</option>
+              </select>
+            </label>
+            <label>
+              Contact phone
+              <input type="tel" name="sellerPhone" placeholder="+61 400 000 000" />
+            </label>
+          </div>
+
+          <label>
+            Short details
+            <textarea
+              name="description"
+              rows="4"
+              placeholder="Clean car, full service history, rego until December."
+            ></textarea>
+          </label>
+
+          <button type="submit" class="button full">Save Car Ad</button>
+          <p id="formMessage" class="message"></p>
+        </form>
+      </section>
+
+      <section class="stock-section">
+        <div class="stock-header">
+          <div>
+            <p class="eyebrow">Customer view</p>
+            <h2>Cars in stock</h2>
+          </div>
+          <input type="search" id="searchInput" placeholder="Search brand or model" />
+        </div>
+
+        <p id="stockCount" class="stock-count"></p>
+        <div id="carList" class="car-list"></div>
+      </section>
+    </main>
+
+    <template id="emptyTemplate">
+      <div class="empty">
+        <h3>No cars added yet</h3>
+        <p>Add your first car ad above and it will show here.</p>
+      </div>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
