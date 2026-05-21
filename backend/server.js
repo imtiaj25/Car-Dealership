@@ -16,6 +16,14 @@ const PORT = process.env.PORT || 5000;
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/luxedrive_dealership";
 
+app.locals.useDatabase = false;
+app.locals.memoryCars = sampleCars.map((car, index) => ({
+  ...car,
+  _id: `local-${index + 1}`,
+  createdAt: new Date().toISOString()
+}));
+app.locals.memoryBookings = [];
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -45,18 +53,21 @@ async function seedCars() {
 
 async function startServer() {
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
+    app.locals.useDatabase = true;
     console.log("Connected to MongoDB.");
 
     await seedCars();
-
-    app.listen(PORT, () => {
-      console.log(`LuxeDrive running at http://localhost:${PORT}`);
-    });
   } catch (error) {
-    console.error("Server startup failed:", error.message);
-    process.exit(1);
+    console.warn("MongoDB not connected. Using temporary in-memory car data.");
+    console.warn(`Reason: ${error.message}`);
   }
+
+  app.listen(PORT, () => {
+    console.log(`Pierre Collet Motors running at http://localhost:${PORT}`);
+  });
 }
 
 startServer();

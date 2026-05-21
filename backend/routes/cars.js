@@ -34,6 +34,44 @@ const upload = multer({
   }
 });
 
+function sortCars(cars, sort) {
+  const sortedCars = [...cars];
+
+  if (sort === "price-low") {
+    return sortedCars.sort((a, b) => Number(a.price) - Number(b.price));
+  }
+
+  if (sort === "price-high") {
+    return sortedCars.sort((a, b) => Number(b.price) - Number(a.price));
+  }
+
+  if (sort === "year") {
+    return sortedCars.sort((a, b) => Number(b.year) - Number(a.year));
+  }
+
+  return sortedCars.reverse();
+}
+
+function filterMemoryCars(cars, filters) {
+  const { minPrice, maxPrice, category, brand, model, search, sort = "newest" } = filters;
+
+  const filteredCars = cars.filter((car) => {
+    const price = Number(car.price);
+    const searchableText = `${car.brand} ${car.model} ${car.category} ${car.condition} ${car.fuelType}`.toLowerCase();
+
+    if (minPrice && price < Number(minPrice)) return false;
+    if (maxPrice && price > Number(maxPrice)) return false;
+    if (category && ![car.category, car.condition].includes(category)) return false;
+    if (brand && car.brand.toLowerCase() !== brand.toLowerCase()) return false;
+    if (model && !car.model.toLowerCase().includes(model.toLowerCase())) return false;
+    if (search && !searchableText.includes(search.toLowerCase())) return false;
+
+    return true;
+  });
+
+  return sortCars(filteredCars, sort);
+}
+
 router.get("/", async (req, res) => {
   try {
     const {
@@ -45,6 +83,10 @@ router.get("/", async (req, res) => {
       search,
       sort = "newest"
     } = req.query;
+
+    if (!req.app.locals.useDatabase) {
+      return res.json(filterMemoryCars(req.app.locals.memoryCars, req.query));
+    }
 
     const query = {};
 
@@ -97,7 +139,7 @@ router.post("/", upload.single("image"), async (req, res) => {
       return res.status(400).json({ message: "Please upload an image or enter an image URL." });
     }
 
-    const car = await Car.create({
+    const carData = {
       image,
       brand: req.body.brand,
       model: req.body.model,
@@ -111,7 +153,19 @@ router.post("/", upload.single("image"), async (req, res) => {
       sellerName: req.body.sellerName,
       sellerPhone: req.body.sellerPhone,
       sellerEmail: req.body.sellerEmail
-    });
+    };
+
+    if (!req.app.locals.useDatabase) {
+      const car = {
+        ...carData,
+        _id: `local-${Date.now()}`,
+        createdAt: new Date().toISOString()
+      };
+      req.app.locals.memoryCars.unshift(car);
+      return res.status(201).json(car);
+    }
+
+    const car = await Car.create(carData);
 
     res.status(201).json(car);
   } catch (error) {
@@ -121,6 +175,17 @@ router.post("/", upload.single("image"), async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
+    if (!req.app.locals.useDatabase) {
+      const beforeCount = req.app.locals.memoryCars.length;
+      req.app.locals.memoryCars = req.app.locals.memoryCars.filter((car) => car._id !== req.params.id);
+
+      if (beforeCount === req.app.locals.memoryCars.length) {
+        return res.status(404).json({ message: "Car not found." });
+      }
+
+      return res.json({ message: "Car deleted successfully." });
+    }
+
     const deletedCar = await Car.findByIdAndDelete(req.params.id);
 
     if (!deletedCar) {
