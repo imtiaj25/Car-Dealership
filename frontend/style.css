@@ -323,6 +323,12 @@ h3 {
   font-size: clamp(2.2rem, 4.2vw, 3.7rem);
 }
 
+.section-subtitle {
+  margin: 12px 0 0;
+  color: var(--soft);
+  font-size: 1.05rem;
+}
+
 .floating-services {
   position: relative;
   overflow: hidden;
