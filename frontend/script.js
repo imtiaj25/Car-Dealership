@@ -8,6 +8,8 @@ const carList = document.querySelector("#carList");
 const stockCount = document.querySelector("#stockCount");
 const searchInput = document.querySelector("#searchInput");
 const emptyTemplate = document.querySelector("#emptyTemplate");
+const navToggle = document.querySelector("#navToggle");
+const navLinks = document.querySelector("#navLinks");
 
 let cars = [];
 let backendAvailable = false;
@@ -66,7 +68,7 @@ function loadLocalCars() {
       fuelType: "Petrol",
       condition: "Used",
       category: "Family",
-      sellerPhone: "+61 400 000 000",
+      sellerPhone: "03 9888 9222",
       description: "Clean family car with service history and smooth automatic transmission."
     },
     {
@@ -81,7 +83,7 @@ function loadLocalCars() {
       fuelType: "Petrol",
       condition: "Used",
       category: "Sports",
-      sellerPhone: "+61 400 000 000",
+      sellerPhone: "03 9888 9222",
       description: "Sporty coupe in excellent condition with low kilometres."
     }
   ];
@@ -114,7 +116,7 @@ function createLocalCar(formData, image) {
     fuelType: formData.get("fuelType").trim(),
     condition: formData.get("condition"),
     category: formData.get("category"),
-    sellerPhone: formData.get("sellerPhone").trim() || "+61 400 000 000",
+    sellerPhone: formData.get("sellerPhone").trim() || "03 9888 9222",
     description: formData.get("description").trim()
   };
 }
@@ -175,7 +177,7 @@ function renderCars() {
         <p class="details">
           <span>Year: ${escapeHtml(car.year)}</span>
           <span>Mileage: ${Number(car.mileage || 0).toLocaleString()} km</span>
-          <span>Phone: ${escapeHtml(car.sellerPhone || "+61 400 000 000")}</span>
+          <span>Phone: ${escapeHtml(car.sellerPhone || "03 9888 9222")}</span>
         </p>
         ${description ? `<p class="description">${description}</p>` : ""}
         <button class="delete-button" data-id="${car._id}">Remove Ad</button>
@@ -219,14 +221,14 @@ async function addCar(event) {
     form.reset();
     showMessage("Car ad saved. Customers can now see it below.");
     renderCars();
-    document.querySelector(".stock-section").scrollIntoView({ behavior: "smooth" });
+    document.querySelector(".used-cars").scrollIntoView({ behavior: "smooth" });
   } catch (error) {
     showMessage(error.message, true);
   }
 }
 
 async function removeCar(carId) {
-  if (backendAvailable && /^[a-f\d]{24}$/i.test(carId)) {
+  if (backendAvailable) {
     await fetch(`${API_BASE}/cars/${carId}`, {
       method: "DELETE"
     });
@@ -239,6 +241,14 @@ async function removeCar(carId) {
 
 form.addEventListener("submit", addCar);
 searchInput.addEventListener("input", renderCars);
+
+navToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("open");
+});
+
+navLinks.addEventListener("click", () => {
+  navLinks.classList.remove("open");
+});
 
 carList.addEventListener("click", (event) => {
   const button = event.target.closest(".delete-button");
